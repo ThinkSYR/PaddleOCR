@@ -18,7 +18,6 @@ import argparse
 import cv2
 from loguru import logger
 from paddleocr import PaddleOCR,draw_ocr
-from shapely.geometry import Polygon
 
 ocr = PaddleOCR(
     use_angle_cls=False, lang='ch', 
@@ -46,43 +45,6 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True)
 app.config['SECRET_KEY'] = 'secret to test!'
 GUID = 'de683f7810e84046ab5a8240a7cc0be3'  # 用于测试的guid
-
-
-def bbox2poly(bbox):
-    if len(bbox) > 0 and isinstance(bbox, list):
-        return bbox
-    x0, y0, x1, y1 = poly1
-    poly1 = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
-    return poly1
-
-
-def calculate_iou(poly1, poly2):
-    """
-    计算两个多边形的IoU
-    poly1，poly2：是由表示边界四个点的坐标形成的列表，形式为 [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
-    """
-    poly1 = bbox2poly(poly1)
-    poly2 = bbox2poly(poly2)
-    # 创建多边形
-    polygon1 = Polygon(poly1)
-    polygon2 = Polygon(poly2)
-    # 计算多边形的面积
-    poly1_area = polygon1.area
-    poly2_area = polygon2.area
-    # 计算多边形的交集区域
-    inter_area = polygon1.intersection(polygon2).area
-    # 计算IoU
-    iou = inter_area / (poly1_area + poly2_area - inter_area)
-    return iou
-
-
-def matched_lines_with_cell(lines, cell_boxs):
-    """
-    规则性匹配，规则：
-    「规则」
-    lines: [[x0, x1, y0, y1], text, prob]
-    boxs: [[x0, x1, y0, y1]]
-    """
 
 
 @app.route("/api/ocr", methods=["POST"])
