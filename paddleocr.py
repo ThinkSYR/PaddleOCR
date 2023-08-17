@@ -54,7 +54,7 @@ __all__ = [
     'save_structure_res', 'download_with_progressbar', 'to_excel'
 ]
 
-SUPPORT_DET_MODEL = ['DB']
+SUPPORT_DET_MODEL = ['DB', 'DB++']
 VERSION = '2.6.1.0'
 SUPPORT_REC_MODEL = ['CRNN', 'SVTR_LCNet']
 BASE_DIR = os.path.expanduser("~/.paddleocr/")
@@ -566,9 +566,9 @@ class PaddleOCR(predict_system.TextSystem):
             for idx, img in enumerate(imgs):
                 img = preprocess_image(img)
                 dt_boxes, elapse = self.text_detector(img)
-                if not dt_boxes:
-                    ocr_res.append(None)
-                    continue
+                # if not dt_boxes:
+                #     ocr_res.append(None)
+                #     continue
                 tmp_res = [box.tolist() for box in dt_boxes]
                 ocr_res.append(tmp_res)
             return ocr_res

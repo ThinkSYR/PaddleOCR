@@ -21,10 +21,11 @@ from paddleocr import PaddleOCR,draw_ocr
 
 ocr = PaddleOCR(
     use_angle_cls=False, lang='ch', 
-    det_model_dir = "./inference/ch_PP-OCRv3_det_infer", 
+    det_model_dir = "./inference/det_dbpp_line", 
     rec_model_dir = "./inference/ch_PP-OCRv3_rec_infer",
     det_limit_side_len=1920,det_limit_type="max",
     det_db_score_mode="slow",
+    det_db_box_thresh=0.5,det_algorithm="DB++", # db++就这点不一样好像
     # use_gpu=False,
 ) # need to run only once to load model into memory
 
@@ -81,30 +82,31 @@ def text_recognition():
     return jsonify(final_result)
 
 
-
 @app.route("/api/ocr", methods=["POST"])
 def predict():
 
     try:
-        img = request.form["image"]
+        img = request.form["image_path"]
     except:
         return jsonify({"code": 100})
-    # base64解析
-    img = base64.b64decode(str(img))
-    image_data = np.frombuffer(img, np.uint8)
-    image_data = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+    # # base64解析
+    # img = base64.b64decode(str(img))
+    # image_data = np.frombuffer(img, np.uint8)
+    # image_data = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
     # print(image_data)
     # predict
-    result = ocr.ocr(image_data)[0]
+    result = ocr.ocr(img)[0]
     res_info = []
     for line in result:
         bbox_4p, text, prob = line[0], line[1][0], line[1][1]
         # print(line)
-        x0 = int(min(bbox_4p, key=lambda b4: b4[0])[0])
-        x1 = int(max(bbox_4p, key=lambda b4: b4[0])[0])
-        y0 = int(min(bbox_4p, key=lambda b4: b4[1])[1])
-        y1 = int(max(bbox_4p, key=lambda b4: b4[1])[1])
-        res_info.append([[x0, x1, y0, y1], text, prob])
+        # x0 = int(min(bbox_4p, key=lambda b4: b4[0])[0])
+        # x1 = int(max(bbox_4p, key=lambda b4: b4[0])[0])
+        # y0 = int(min(bbox_4p, key=lambda b4: b4[1])[1])
+        # y1 = int(max(bbox_4p, key=lambda b4: b4[1])[1])
+        # bbox = [x0, x1, y0, y1]
+        bbox = bbox_4p
+        res_info.append([bbox, text, prob])
     final_result = {
         "result": res_info,
         "code": 200,
@@ -177,7 +179,7 @@ def get_rotate():
 
 def init_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=9300)
+    parser.add_argument("--port", type=int, default=19200)
     parser.add_argument("--debug", type=bool, default=False)
     return parser.parse_args()
 

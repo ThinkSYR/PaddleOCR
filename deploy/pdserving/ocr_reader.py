@@ -80,7 +80,13 @@ class DetResizeForTest(object):
                 else:
                     ratio = float(limit_side_len) / w
             else:
-                ratio = 1.
+                if min(h, w) < 960:
+                    if h < w:
+                        ratio = float(960) / h
+                    else:
+                        ratio = float(960) / w
+                else:
+                    ratio = 1.
         else:
             if min(h, w) < limit_side_len:
                 if h < w:
