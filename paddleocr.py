@@ -641,8 +641,9 @@ class PaddleOCR(predict_system.TextSystem):
         # for infer pdf file
         if isinstance(img, list):
             if self.page_num > len(img) or self.page_num == 0:
-                self.page_num = len(img)
-            imgs = img[:self.page_num]
+                imgs = img
+            else:
+                imgs = img[:self.page_num]
         else:
             imgs = [img]
 
@@ -671,9 +672,9 @@ class PaddleOCR(predict_system.TextSystem):
             for idx, img in enumerate(imgs):
                 img = preprocess_image(img)
                 dt_boxes, elapse = self.text_detector(img)
-                if not dt_boxes:
-                    ocr_res.append(None)
-                    continue
+                # if not dt_boxes:
+                #     ocr_res.append(None)
+                #     continue
                 tmp_res = [box.tolist() for box in dt_boxes]
                 ocr_res.append(tmp_res)
             return ocr_res
