@@ -21,11 +21,12 @@ from paddleocr import PaddleOCR,draw_ocr
 
 ocr = PaddleOCR(
     use_angle_cls=False, lang='ch', 
-    det_model_dir = "./inference/det_dbpp_line", 
-    rec_model_dir = "./inference/ch_PP-OCRv3_rec_infer",
+    det_model_dir = "./inference/v4_line_oba_ft", 
+    rec_model_dir = "./inference/ch_PP-OCRv4_rec_infer",
     det_limit_side_len=1920,det_limit_type="max",
     det_db_score_mode="slow",
-    det_db_box_thresh=0.5,det_algorithm="DB++", # db++就这点不一样好像
+    # det_db_box_thresh=0.5,det_algorithm="DB++", # db++就这点不一样好像
+    drop_score=0.05,rec_batch_num=4,
     # use_gpu=False,
 ) # need to run only once to load model into memory
 
@@ -107,8 +108,53 @@ def predict():
         # bbox = [x0, x1, y0, y1]
         bbox = bbox_4p
         res_info.append([bbox, text, prob])
+
+    # 获取角度
+    angle_list = []
+    for box in res_info:
+        # 顺时针四点双层list坐标，计算长边和短边
+        box = np.int0(box[0])
+        l1  = (np.linalg.norm(box[0] - box[1]) + np.linalg.norm(box[2] - box[3])) / 2
+        l2  = (np.linalg.norm(box[1] - box[2]) + np.linalg.norm(box[3] - box[0])) / 2
+        # 长宽比
+        if l1 > l2:
+            prop = l1 / l2
+        else:
+            prop = l2 / l1
+            box[[0, 1, 2, 3], :] = box[[1, 2, 3, 0], :] # 错一位，换长边和短边
+        if prop > 2:
+            # 长边中点
+            center0 = [(box[0][0] + box[1][0])/2, (box[0][1] + box[1][1])/2]
+            center1 = [(box[2][0] + box[3][0])/2, (box[2][1] + box[3][1])/2]
+            # math.degrees输出范围-180~180
+            degree  = 90 - math.degrees(math.atan2(center1[1] - center0[1], center1[0] - center0[0]))
+            degree  = degree if degree <= 90 else degree - 180
+            # print(degree)
+            angle_list.append(degree)
+    if len(angle_list) == 0:
+        angle = 0
+    else:
+        angle_list = np.array(angle_list)
+        angle_abs  = np.abs(angle_list)
+        # 过滤，在一定区间内计算角度的分布，不能太分散
+        range_list  = [[0, 15], [15, 30], [30, 45], [45, 60], [60, 75], [75, 90]]
+        angle_count = [0, 0, 0, 0, 0, 0]
+        for i, range_se in enumerate(range_list):
+            angle_count[i] = np.sum(((angle_abs >= range_se[0]) & (angle_abs <= range_se[1])))
+        # 集中
+        angle_range = range_list[np.argmax(angle_count)]
+        # print(angle_count, angle_range)
+        angle_list = angle_list[(angle_abs >= angle_range[0]) & (angle_abs <= angle_range[1])]
+        # 先判断角度的正负，不能有正有负会影响结果，以多数为准
+        if (angle_list >= 0).sum() > (angle_list < 0).sum():
+            angle = np.mean(np.abs(angle_list))
+        else:
+            angle = -np.mean(np.abs(angle_list))
+    print(angle)
+
     final_result = {
         "result": res_info,
+        "degree": int(-angle), # 负方向输出
         "code": 200,
     }
     return jsonify(final_result)

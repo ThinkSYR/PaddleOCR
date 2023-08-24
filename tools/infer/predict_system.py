@@ -234,13 +234,13 @@ def main(args):
                                                    '_' + str(index) + '.png')
                 else:
                     save_file = image_file
-                cv2.imwrite(
-                    os.path.join(draw_img_save_dir,
-                                 os.path.basename(save_file)),
-                    draw_img[:, :, ::-1])
-                logger.debug("The visualized image saved in {}".format(
-                    os.path.join(draw_img_save_dir, os.path.basename(
-                        save_file))))
+                # cv2.imwrite(
+                #     os.path.join(draw_img_save_dir,
+                #                  os.path.basename(save_file)),
+                #     draw_img[:, :, ::-1])
+                # logger.debug("The visualized image saved in {}".format(
+                #     os.path.join(draw_img_save_dir, os.path.basename(
+                #         save_file))))
 
     logger.info("The predict total time is {}".format(time.time() - _st))
     if args.benchmark:

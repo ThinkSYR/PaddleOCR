@@ -24,7 +24,7 @@ from paddleocr import PaddleOCR,draw_ocr
 """
 ocr = PaddleOCR(
     use_angle_cls=False, lang='ch', 
-    det_model_dir = "./inference/det_ft_para", 
+    det_model_dir = "./inference/det_para_dbpp_oba_ft", 
     rec_model_dir = "./inference/ch_PP-OCRv3_rec_infer", # 没用
     det_limit_side_len=1920,det_limit_type="max",
     det_db_score_mode="slow",
